@@ -16,6 +16,6 @@ spec:
         - name: ghcr-secret
       containers:
         - name: idem-ipl
-          image: ghcr.io/tonysokolove/idem-ipl:0.0.1
+          image: ghcr.io/tonysokolove/idem-ipl:0.0.2
           ports:
             - containerPort: 8080
