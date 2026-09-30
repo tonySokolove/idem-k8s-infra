@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: idem-ipl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: idem-ipl
+  template:
+    metadata:
+      labels:
+        app: idem-ipl
+    spec:
+      containers:
+        - name: idem-ipl
+          image: ghcr.io/tonysokolove/idem-ipl:0.0.1
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 128Mi
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
