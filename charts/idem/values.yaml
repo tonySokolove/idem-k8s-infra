@@ -42,6 +42,12 @@ postgresql:
   persistence:
     storageClass: nvme.network-drives.csi.timeweb.cloud
     size: 10Gi
+  externalAccess:
+    enabled: false
+    host: ""
+    entryPoint: postgresql
+    clusterIssuer: letsencrypt-prod
+    allowedIPs: []
   resources:
     requests:
       cpu: 250m

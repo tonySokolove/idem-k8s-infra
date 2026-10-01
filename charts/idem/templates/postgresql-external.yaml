@@ -1,0 +1,45 @@
+{{- if and .Values.postgresql.enabled .Values.postgresql.externalAccess.enabled }}
+{{- $access := .Values.postgresql.externalAccess }}
+{{- $host := required "postgresql.externalAccess.host is required" $access.host }}
+{{- $allowedIPs := required "postgresql.externalAccess.allowedIPs must not be empty" $access.allowedIPs }}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: idem-postgresql-tls
+  namespace: {{ .Release.Namespace }}
+spec:
+  secretName: idem-postgresql-tls
+  dnsNames:
+    - {{ $host | quote }}
+  issuerRef:
+    name: {{ $access.clusterIssuer | quote }}
+    kind: ClusterIssuer
+---
+apiVersion: traefik.io/v1alpha1
+kind: MiddlewareTCP
+metadata:
+  name: idem-postgresql-allowlist
+  namespace: {{ .Release.Namespace }}
+spec:
+  ipAllowList:
+    sourceRange:
+      {{- toYaml $allowedIPs | nindent 6 }}
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: idem-postgresql
+  namespace: {{ .Release.Namespace }}
+spec:
+  entryPoints:
+    - {{ $access.entryPoint | quote }}
+  routes:
+    - match: {{ printf "HostSNI(`%s`)" $host | quote }}
+      middlewares:
+        - name: idem-postgresql-allowlist
+      services:
+        - name: idem-postgresql
+          port: 5432
+  tls:
+    secretName: idem-postgresql-tls
+{{- end }}

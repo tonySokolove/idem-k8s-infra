@@ -1,0 +1,3 @@
+service:
+  annotations:
+    k8s.timeweb.cloud/attached-loadbalancer-proxy-enable: "true"

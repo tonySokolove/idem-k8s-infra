@@ -1,0 +1,20 @@
+# Overlay for the existing traefik release, chart 33.2.1.
+# Enable PROXY protocol parsing before enabling it on the load balancer.
+ports:
+  web:
+    proxyProtocol:
+      trustedIPs:
+        - 192.168.0.0/24
+  websecure:
+    proxyProtocol:
+      trustedIPs:
+        - 192.168.0.0/24
+  postgresql:
+    port: 5432
+    exposedPort: 5432
+    protocol: TCP
+    expose:
+      default: true
+    proxyProtocol:
+      trustedIPs:
+        - 192.168.0.0/24
