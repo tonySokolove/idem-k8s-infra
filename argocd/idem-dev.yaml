@@ -16,6 +16,10 @@ spec:
     helm:
       valueFiles:
         - envs/dev.yaml
+      parameters:
+        - name: services.ipl.image.tag
+          value: "0.0.2"
+          forceString: true
 
   destination:
     server: https://kubernetes.default.svc
