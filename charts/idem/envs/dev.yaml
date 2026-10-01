@@ -12,7 +12,7 @@ services:
     enabled: true
     image:
       repository: ghcr.io/tonysokolove/idem-registrar-simulator
-      tag: "0.1.1"
+      tag: "0.1.2"
     port: 8080
     servicePort: 80
     healthPath: /health
