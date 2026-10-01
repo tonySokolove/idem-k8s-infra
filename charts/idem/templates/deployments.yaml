@@ -13,6 +13,7 @@ metadata:
 
 spec:
   replicas: {{ default 1 $service.replicas }}
+  revisionHistoryLimit: 1
 
   strategy:
     type: RollingUpdate
