@@ -36,7 +36,7 @@ services:
         value: http://127.0.0.1:32148/check-in
     ingress:
       enabled: true
-      host: idem-registrar.thelid.ru
+      host: idem-registrar-simulator.thelid.ru
   ipl:
     enabled: true
     image:
