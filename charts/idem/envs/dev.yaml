@@ -8,6 +8,35 @@ postgresql:
     allowedIPs: []
 
 services:
+  registrar:
+    enabled: true
+    image:
+      repository: ghcr.io/tonysokolove/idem-registrar-simulator
+      tag: "0.1.0"
+    port: 8080
+    servicePort: 80
+    healthPath: /health
+    env:
+      - name: PGHOST
+        value: idem-postgresql
+      - name: PGPORT
+        value: "5432"
+      - name: PGDATABASE
+        value: idem
+      - name: PGUSER
+        value: idem_registrar_simulator
+      - name: PGSSLMODE
+        value: disable
+      - name: PGPASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: idem-registrar-simulator
+            key: password
+      - name: STATION_AGENT_URL
+        value: http://127.0.0.1:32148/check-in
+    ingress:
+      enabled: true
+      host: idem-registrar.thelid.ru
   ipl:
     enabled: true
     image:

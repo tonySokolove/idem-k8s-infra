@@ -43,6 +43,11 @@ spec:
 
           imagePullPolicy: IfNotPresent
 
+          {{- with $service.env }}
+          env:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+
           ports:
             - name: http
               containerPort: {{ default 8080 $service.port }}
