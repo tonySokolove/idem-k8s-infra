@@ -11,7 +11,8 @@ helm upgrade traefik traefik --repo https://traefik.github.io/charts --version 3
 ```
 
 Only after Traefik is ready, enable PROXY protocol on the existing Timeweb load
-balancer. This preserves the client's IP for the PostgreSQL TCP allowlist:
+balancer and set `externalTrafficPolicy: Local`. This preserves the client's IP
+for the PostgreSQL TCP allowlist, including connections through the NodePort:
 
 ```sh
 helm upgrade traefik traefik --repo https://traefik.github.io/charts --version 33.2.1 --namespace traefik --reuse-values -f infrastructure/traefik/postgresql-values.yaml -f infrastructure/traefik/loadbalancer-values.yaml --wait --timeout 5m
@@ -26,6 +27,11 @@ existing load balancer at 201.34.133.202. DNS must point at that IP for cert-man
 to complete its HTTP-01 challenge. Only addresses in
 `postgresql.externalAccess.allowedIPs` can connect; update the dev values if the
 workstation's public IP changes.
+
+The PostgreSQL NodePort is pinned to 31349. If the public port 5432 remains
+unreachable after updating the Service, check the Timeweb load balancer rules.
+On load balancer 145661, the required rule is TCP 5432 -> TCP 31349, targeting
+the existing backend worker 192.168.0.5. Preserve the rules for ports 80 and 443.
 
 Clients must use PostgreSQL TLS with SNI (`sslmode=verify-full`, a trusted CA bundle
 and hostname `idem-postgres.thelid.ru`). TLS terminates at Traefik; traffic from
