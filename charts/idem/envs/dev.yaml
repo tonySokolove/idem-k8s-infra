@@ -1,0 +1,12 @@
+services:
+  ipl:
+    enabled: true
+    image:
+      repository: ghcr.io/tonysokolove/idem-ipl
+      tag: "0.0.2"
+    port: 8080
+    servicePort: 80
+    healthPath: /health
+    ingress:
+      enabled: true
+      host: idem-ipl.thelid.ru

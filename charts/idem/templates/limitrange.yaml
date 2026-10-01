@@ -1,0 +1,23 @@
+{{- if .Values.limitRange.enabled }}
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: idem-default-limits
+  namespace: {{ .Release.Namespace }}
+
+spec:
+  limits:
+    - type: Container
+
+      defaultRequest:
+        cpu: {{ .Values.limitRange.defaultRequest.cpu }}
+        memory: {{ .Values.limitRange.defaultRequest.memory }}
+
+      default:
+        cpu: {{ .Values.limitRange.default.cpu }}
+        memory: {{ .Values.limitRange.default.memory }}
+
+      max:
+        cpu: {{ .Values.limitRange.max.cpu }}
+        memory: {{ .Values.limitRange.max.memory }}
+{{- end }}

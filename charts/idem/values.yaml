@@ -1,0 +1,32 @@
+imagePullSecrets:
+  - name: ghcr-secret
+
+global:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 300m
+      memory: 512Mi
+
+resourceQuota:
+  enabled: true
+  hard:
+    requestsCpu: "1.5"
+    requestsMemory: 3Gi
+    limitsCpu: "4"
+    limitsMemory: 6Gi
+
+limitRange:
+  enabled: true
+  defaultRequest:
+    cpu: 100m
+    memory: 128Mi
+  default:
+    cpu: 300m
+    memory: 512Mi
+  max:
+    cpu: "2"
+    memory: 2Gi
+services: {}

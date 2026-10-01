@@ -1,0 +1,28 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+
+metadata:
+  name: idem-dev
+  namespace: argocd
+
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/tonySokolove/idem-k8s-infra
+    targetRevision: main
+    path: charts/idem
+
+    helm:
+      valueFiles:
+        - envs/dev.yaml
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: idem
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

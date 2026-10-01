@@ -1,0 +1,45 @@
+{{- range $name, $service := .Values.services }}
+{{- if and $service.enabled $service.ingress $service.ingress.enabled }}
+{{- $ctx := dict "name" $name "service" $service "root" $ }}
+{{- $host := required (printf "services.%s.ingress.host is required" $name) $service.ingress.host }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+
+metadata:
+  name: {{ include "idem.fullname" $name }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "idem.labels" $ctx | nindent 4 }}
+
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+
+spec:
+  ingressClassName: traefik
+
+  tls:
+    - hosts:
+        - {{ $host }}
+
+      secretName: {{ include "idem.fullname" $name }}-tls
+
+  rules:
+    - host: {{ $host }}
+
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+
+            backend:
+              service:
+                name: {{ include "idem.fullname" $name }}
+
+                port:
+                  number: {{ default 80 $service.servicePort }}
+{{- end }}
+{{- end }}
