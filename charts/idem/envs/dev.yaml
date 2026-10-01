@@ -3,6 +3,8 @@ postgresql:
   externalAccess:
     enabled: true
     host: idem-postgres.thelid.ru
+    additionalEntryPoints:
+      - websecure
     allowedIPs:
       - 91.65.49.39/32
 

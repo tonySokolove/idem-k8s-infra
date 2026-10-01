@@ -33,6 +33,9 @@ metadata:
 spec:
   entryPoints:
     - {{ $access.entryPoint | quote }}
+    {{- range $access.additionalEntryPoints }}
+    - {{ . | quote }}
+    {{- end }}
   routes:
     - match: {{ printf "HostSNI(`%s`)" $host | quote }}
       middlewares:

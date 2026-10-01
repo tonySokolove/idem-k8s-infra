@@ -46,6 +46,7 @@ postgresql:
     enabled: false
     host: ""
     entryPoint: postgresql
+    additionalEntryPoints: []
     clusterIssuer: letsencrypt-prod
     allowedIPs: []
   resources:
