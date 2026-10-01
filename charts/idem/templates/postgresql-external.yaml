@@ -1,7 +1,7 @@
 {{- if and .Values.postgresql.enabled .Values.postgresql.externalAccess.enabled }}
 {{- $access := .Values.postgresql.externalAccess }}
 {{- $host := required "postgresql.externalAccess.host is required" $access.host }}
-{{- $allowedIPs := required "postgresql.externalAccess.allowedIPs must not be empty" $access.allowedIPs }}
+{{- $allowedIPs := $access.allowedIPs | default list }}
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
@@ -14,6 +14,7 @@ spec:
   issuerRef:
     name: {{ $access.clusterIssuer | quote }}
     kind: ClusterIssuer
+{{- if $allowedIPs }}
 ---
 apiVersion: traefik.io/v1alpha1
 kind: MiddlewareTCP
@@ -24,6 +25,7 @@ spec:
   ipAllowList:
     sourceRange:
       {{- toYaml $allowedIPs | nindent 6 }}
+{{- end }}
 ---
 apiVersion: traefik.io/v1alpha1
 kind: IngressRouteTCP
@@ -38,8 +40,10 @@ spec:
     {{- end }}
   routes:
     - match: {{ printf "HostSNI(`%s`)" $host | quote }}
+      {{- if $allowedIPs }}
       middlewares:
         - name: idem-postgresql-allowlist
+      {{- end }}
       services:
         - name: idem-postgresql
           port: 5432
