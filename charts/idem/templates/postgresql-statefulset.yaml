@@ -1,0 +1,102 @@
+{{- if .Values.postgresql.enabled }}
+{{- $pg := .Values.postgresql }}
+{{- $ctx := dict "name" "postgresql" "root" . }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "idem.fullname" "postgresql" }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "idem.selectorLabels" $ctx | nindent 4 }}
+    app.kubernetes.io/part-of: idem
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  serviceName: idem-postgresql-headless
+  replicas: 1
+  revisionHistoryLimit: 2
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Retain
+    whenScaled: Retain
+  selector:
+    matchLabels:
+      {{- include "idem.selectorLabels" $ctx | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "idem.selectorLabels" $ctx | nindent 8 }}
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 60
+      securityContext:
+        runAsUser: 999
+        runAsGroup: 999
+        runAsNonRoot: true
+        fsGroup: 999
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+        - name: postgresql
+          image: {{ printf "%s:%s" (required "postgresql.image.repository is required" $pg.image.repository) (required "postgresql.image.tag is required" $pg.image.tag | toString) | quote }}
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          ports:
+            - name: postgresql
+              containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: {{ required "postgresql.auth.database is required" $pg.auth.database | quote }}
+            - name: POSTGRES_USER
+              value: {{ required "postgresql.auth.username is required" $pg.auth.username | quote }}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ required "postgresql.auth.existingSecret is required" $pg.auth.existingSecret | quote }}
+                  key: {{ required "postgresql.auth.passwordKey is required" $pg.auth.passwordKey | quote }}
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql
+          resources:
+            {{- toYaml $pg.resources | nindent 12 }}
+          startupProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -ec
+                - 'pg_isready -h 127.0.0.1 -p 5432 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 60
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -ec
+                - 'pg_isready -h 127.0.0.1 -p 5432 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -ec
+                - 'pg_isready -h 127.0.0.1 -p 5432 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: {{ required "postgresql.persistence.storageClass is required" $pg.persistence.storageClass | quote }}
+        resources:
+          requests:
+            storage: {{ required "postgresql.persistence.size is required" $pg.persistence.size | quote }}
+{{- end }}

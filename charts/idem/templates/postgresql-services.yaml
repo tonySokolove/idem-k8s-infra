@@ -1,0 +1,34 @@
+{{- if .Values.postgresql.enabled }}
+{{- $ctx := dict "name" "postgresql" "root" . }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: idem-postgresql-headless
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "idem.selectorLabels" $ctx | nindent 4 }}
+spec:
+  clusterIP: None
+  selector:
+    {{- include "idem.selectorLabels" $ctx | nindent 4 }}
+  ports:
+    - name: postgresql
+      port: 5432
+      targetPort: postgresql
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "idem.fullname" "postgresql" }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "idem.selectorLabels" $ctx | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "idem.selectorLabels" $ctx | nindent 4 }}
+  ports:
+    - name: postgresql
+      port: 5432
+      targetPort: postgresql
+{{- end }}

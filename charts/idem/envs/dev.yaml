@@ -1,3 +1,6 @@
+postgresql:
+  enabled: true
+
 services:
   ipl:
     enabled: true

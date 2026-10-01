@@ -20,6 +20,9 @@ spec:
         - name: services.ipl.image.tag
           value: "0.0.2"
           forceString: true
+        - name: postgresql.image.tag
+          value: "18.6-bookworm"
+          forceString: true
 
   destination:
     server: https://kubernetes.default.svc
