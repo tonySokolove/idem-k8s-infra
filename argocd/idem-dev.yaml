@@ -17,9 +17,6 @@ spec:
       valueFiles:
         - envs/dev.yaml
       parameters:
-        - name: services.ipl.image.tag
-          value: "0.0.2"
-          forceString: true
         - name: postgresql.image.tag
           value: "18.6-bookworm"
           forceString: true
@@ -28,8 +25,6 @@ spec:
     server: https://kubernetes.default.svc
     namespace: idem
   syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
     syncOptions:
       - CreateNamespace=true
+      - ApplyOutOfSyncOnly=true

@@ -37,14 +37,90 @@ services:
     ingress:
       enabled: true
       host: idem-registrar-simulator.thelid.ru
-  ipl:
+  # Check-in Service: проверка билета на входе и выдача NFC-бейджа. К нему ходит Station Agent.
+  check-in:
     enabled: true
     image:
-      repository: ghcr.io/tonysokolove/idem-ipl
-      tag: "0.0.2"
+      repository: ghcr.io/tonysokolove/idem-check-in
+      tag: "0.1.0"
     port: 8080
     servicePort: 80
     healthPath: /health
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: "1"
+        memory: 768Mi
+    env:
+      - name: DB_URL
+        value: jdbc:postgresql://idem-postgresql:5432/idem?sslmode=disable
+      - name: DB_USERNAME
+        value: idem_checkin
+      - name: DB_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: idem-check-in
+            key: db-password
+      # ВРЕМЕННО: одно тестовое мероприятие для всех стоек, пока нет Device Service
+      - name: CHECKIN_EVENT_ID
+        value: e23bbab1-f226-46ca-b558-d253f24418bc
+      - name: CARD_BASE_URL
+        value: https://idem-check-in.thelid.ru/c/
+      - name: STATION_AGENT_API_KEYS
+        valueFrom:
+          secretKeyRef:
+            name: idem-check-in
+            key: station-agent-api-keys
+      - name: REGISTRATION_URL
+        value: http://idem-registration
+      - name: REGISTRATION_API_TOKEN
+        valueFrom:
+          secretKeyRef:
+            name: idem-registration
+            key: checkin-token
     ingress:
       enabled: true
-      host: idem-ipl.thelid.ru
+      host: idem-check-in.thelid.ru
+  # Registration Service: регистрации и билеты. Только внутри кластера, без Ingress.
+  registration:
+    enabled: true
+    image:
+      repository: ghcr.io/tonysokolove/idem-registration
+      tag: "0.1.0"
+    port: 8080
+    servicePort: 80
+    healthPath: /health
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: "1"
+        memory: 768Mi
+    env:
+      - name: DB_URL
+        value: jdbc:postgresql://idem-postgresql:5432/idem?sslmode=disable
+      - name: DB_USERNAME
+        value: idem_registration
+      - name: DB_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: idem-registration
+            key: db-password
+      - name: CHECKIN_TOKEN
+        valueFrom:
+          secretKeyRef:
+            name: idem-registration
+            key: checkin-token
+      - name: IMPORT_TOKEN
+        valueFrom:
+          secretKeyRef:
+            name: idem-registration
+            key: dev-import-token
+      # Токены сервисов, которым разрешён внутренний API
+      - name: INTERNAL_API_TOKENS
+        value: $(CHECKIN_TOKEN),$(IMPORT_TOKEN)
+    ingress:
+      enabled: false

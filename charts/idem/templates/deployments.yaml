@@ -59,6 +59,16 @@ spec:
             {{- toYaml $.Values.global.resources | nindent 12 }}
             {{- end }}
 
+          # Даёт медленно стартующим сервисам (Spring Boot на малом CPU) время подняться,
+          # прежде чем liveness начнёт перезапускать pod
+          startupProbe:
+            httpGet:
+              path: {{ default "/health" $service.healthPath }}
+              port: http
+
+            periodSeconds: 5
+            failureThreshold: {{ default 24 $service.startupFailureThreshold }}
+
           readinessProbe:
             httpGet:
               path: {{ default "/health" $service.healthPath }}
