@@ -1,3 +1,29 @@
+# Секреты из OpenBao (https://idem-secret-manager.thelid.ru), KV mount idem/.
+# Kubernetes Secret с именем ключа создаётся и обновляется External Secrets Operator.
+externalSecrets:
+  enabled: true
+  refreshInterval: 1h
+  store:
+    name: openbao
+    server: http://openbao.openbao.svc:8200
+    path: idem
+    role: external-secrets
+  secrets:
+    idem-postgresql:
+      path: dev/postgresql
+    idem-registrar-simulator:
+      path: dev/registrar-simulator
+    idem-check-in:
+      path: dev/check-in
+    idem-registration:
+      path: dev/registration
+    ghcr-secret:
+      path: dev/ghcr
+      template:
+        type: kubernetes.io/dockerconfigjson
+        data:
+          .dockerconfigjson: "{{ .dockerconfigjson }}"
+
 postgresql:
   enabled: true
   externalAccess:

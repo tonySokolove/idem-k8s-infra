@@ -1,0 +1,92 @@
+# OpenBao — централизованное хранилище секретов IDEM (UI: https://idem-secret-manager.thelid.ru).
+# Ключ static auto-unseal хранится в Secret openbao/openbao-unseal-key и в Git не попадает.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+
+metadata:
+  name: openbao
+  namespace: argocd
+
+spec:
+  project: default
+
+  source:
+    repoURL: https://openbao.github.io/openbao-helm
+    chart: openbao
+    targetRevision: 0.30.2
+    helm:
+      valuesObject:
+        injector:
+          enabled: false
+        ui:
+          enabled: true
+        server:
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 384Mi
+          dataStorage:
+            enabled: true
+            size: 1Gi
+            storageClass: nvme.network-drives.csi.timeweb.cloud
+          volumes:
+            - name: unseal-key
+              secret:
+                secretName: openbao-unseal-key
+                defaultMode: 0400
+          volumeMounts:
+            - name: unseal-key
+              mountPath: /openbao/secrets
+              readOnly: true
+          standalone:
+            enabled: true
+            config: |
+              ui = true
+
+              listener "tcp" {
+                tls_disable     = 1
+                address         = "[::]:8200"
+                cluster_address = "[::]:8201"
+              }
+
+              storage "pebbledb" {
+                path = "/openbao/data/pebbledb"
+              }
+
+              # Журнал всех обращений (значения секретов в нём захешированы) — в логах pod
+              audit "file" "to-stdout" {
+                description = "Audit log to stdout"
+                options {
+                  file_path = "stdout"
+                }
+              }
+
+              # Auto-unseal: после перезапуска pod хранилище открывается само
+              seal "static" {
+                current_key_id = "idem-dev-1"
+                current_key    = "file:///openbao/secrets/unseal.key"
+              }
+          ingress:
+            enabled: true
+            ingressClassName: traefik
+            annotations:
+              cert-manager.io/cluster-issuer: letsencrypt-prod
+              traefik.ingress.kubernetes.io/router.entrypoints: websecure
+              traefik.ingress.kubernetes.io/router.tls: "true"
+            hosts:
+              - host: idem-secret-manager.thelid.ru
+            tls:
+              - secretName: openbao-tls
+                hosts:
+                  - idem-secret-manager.thelid.ru
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: openbao
+
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
