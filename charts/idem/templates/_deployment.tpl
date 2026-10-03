@@ -1,13 +1,25 @@
-{{- range $name, $service := .Values.services }}
+{{/*
+Общий Deployment для типового HTTP-сервиса IDEM: один контейнер, порт http, /health-пробы.
+Вызов из templates/<service>/deployment.yaml:
+  {{ include "idem.deployment" (dict "name" "<service>" "root" $) }}
+
+Шаблон намеренно не расширяется под частные случаи. Если сервису нужно то, чего здесь нет
+(sidecar, volumes, init-контейнер, другие пробы), не добавляйте параметр сюда:
+замените include в папке этого сервиса на его собственный полный манифест.
+*/}}
+{{- define "idem.deployment" -}}
+{{- $name := .name }}
+{{- $root := .root }}
+{{- $service := include "idem.service.values" . | fromYaml }}
 {{- if $service.enabled }}
-{{- $ctx := dict "name" $name "service" $service "root" $ }}
----
+{{- $ctx := dict "name" $name "service" $service "root" $root }}
+{{- $env := concat ($service.env | default list) ($service.extraEnv | default list) }}
 apiVersion: apps/v1
 kind: Deployment
 
 metadata:
   name: {{ include "idem.fullname" $name }}
-  namespace: {{ $.Release.Namespace }}
+  namespace: {{ $root.Release.Namespace }}
   labels:
     {{- include "idem.labels" $ctx | nindent 4 }}
 
@@ -31,7 +43,7 @@ spec:
         {{- include "idem.labels" $ctx | nindent 8 }}
 
     spec:
-      {{- with $.Values.imagePullSecrets }}
+      {{- with $root.Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
@@ -43,7 +55,7 @@ spec:
 
           imagePullPolicy: IfNotPresent
 
-          {{- with $service.env }}
+          {{- with $env }}
           env:
             {{- toYaml . | nindent 12 }}
           {{- end }}
@@ -56,7 +68,7 @@ spec:
             {{- if $service.resources }}
             {{- toYaml $service.resources | nindent 12 }}
             {{- else }}
-            {{- toYaml $.Values.global.resources | nindent 12 }}
+            {{- toYaml $root.Values.global.resources | nindent 12 }}
             {{- end }}
 
           # Даёт медленно стартующим сервисам (Spring Boot на малом CPU) время подняться,

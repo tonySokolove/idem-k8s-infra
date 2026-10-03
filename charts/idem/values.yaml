@@ -1,6 +1,11 @@
+# Общие значения для всех сред и сервисов.
+# Порядок загрузки (argocd/idem-dev.yaml → valueFiles): values.yaml → services/*.yaml → envs/<env>.yaml,
+# поверх всего — helm.parameters Application (теги образов).
+
 imagePullSecrets:
   - name: ghcr-secret
 
+# Ресурсы по умолчанию для сервиса без своего блока resources
 global:
   resources:
     requests:
@@ -29,32 +34,7 @@ limitRange:
   max:
     cpu: "2"
     memory: 2Gi
-postgresql:
-  enabled: false
-  image:
-    repository: postgres
-    tag: "18.6-bookworm"
-  auth:
-    database: idem
-    username: idem
-    existingSecret: idem-postgresql
-    passwordKey: password
-  persistence:
-    storageClass: nvme.network-drives.csi.timeweb.cloud
-    size: 10Gi
-  externalAccess:
-    enabled: false
-    host: ""
-    entryPoint: postgresql
-    additionalEntryPoints: []
-    clusterIssuer: letsencrypt-prod
-    allowedIPs: []
-  resources:
-    requests:
-      cpu: 250m
-      memory: 512Mi
-    limits:
-      cpu: "1"
-      memory: 1Gi
 
+# Заполняются файлами services/*.yaml
+postgresql: {}
 services: {}

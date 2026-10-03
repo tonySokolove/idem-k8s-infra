@@ -14,13 +14,24 @@ spec:
     path: charts/idem
 
     helm:
+      # Порядок важен: следующий файл перекрывает предыдущий. Новый сервис — добавить его services/<name>.yaml.
       valueFiles:
+        - services/postgresql.yaml
+        - services/registrar.yaml
+        - services/check-in.yaml
+        - services/registration.yaml
         - envs/dev.yaml
+      # Версии образов сервисов. Видны и редактируются в Argo CD: idem-dev → Details → Manifest.
+      # Правка в UI меняет только Application в кластере — перенесите её сюда, иначе
+      # следующий kubectl apply этого файла вернёт старую версию.
       parameters:
-        - name: postgresql.image.tag
-          value: "18.6-bookworm"
+        - name: services.registrar.image.tag
+          value: "0.1.2"
           forceString: true
-        - name: check-in.image.tag
+        - name: services.check-in.image.tag
+          value: "0.1.0"
+          forceString: true
+        - name: services.registration.image.tag
           value: "0.1.0"
           forceString: true
 

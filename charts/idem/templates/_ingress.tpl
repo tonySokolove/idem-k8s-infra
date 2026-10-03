@@ -1,14 +1,23 @@
-{{- range $name, $service := .Values.services }}
+{{/*
+Общий Ingress через Traefik (websecure) с сертификатом Let's Encrypt.
+Вызов из templates/<service>/ingress.yaml:
+  {{ include "idem.ingress" (dict "name" "<service>" "root" $) }}
+Нет файла ingress.yaml в папке сервиса — нет внешнего адреса.
+Особый случай (несколько хостов, path-маршруты, middleware) — полный манифест в папке сервиса.
+*/}}
+{{- define "idem.ingress" -}}
+{{- $name := .name }}
+{{- $root := .root }}
+{{- $service := include "idem.service.values" . | fromYaml }}
 {{- if and $service.enabled $service.ingress $service.ingress.enabled }}
-{{- $ctx := dict "name" $name "service" $service "root" $ }}
+{{- $ctx := dict "name" $name "service" $service "root" $root }}
 {{- $host := required (printf "services.%s.ingress.host is required" $name) $service.ingress.host }}
----
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 
 metadata:
   name: {{ include "idem.fullname" $name }}
-  namespace: {{ $.Release.Namespace }}
+  namespace: {{ $root.Release.Namespace }}
   labels:
     {{- include "idem.labels" $ctx | nindent 4 }}
 

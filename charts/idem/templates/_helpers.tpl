@@ -45,3 +45,17 @@ helm.sh/chart: {{ printf "%s-%s" .root.Chart.Name .root.Chart.Version }}
 {{- $repo := required (printf "services.%s.image.repository is required" .name) .service.image.repository -}}
 {{- printf "%s:%s" $repo $tag -}}
 {{- end }}
+
+{{/*
+Values сервиса services.<name> в виде YAML. Падает, если нет services.<name>.enabled: обычно это значит, что
+файл services/<name>.yaml не подключён в valueFiles (argocd/idem-dev.yaml) или в helm -f.
+Громкая ошибка лучше, чем тихо пропавшие из рендера ресурсы, которые Argo CD удалит при Prune.
+Вызов: include "idem.service.values" (dict "name" $name "root" $)
+*/}}
+{{- define "idem.service.values" -}}
+{{- $service := index (.root.Values.services | default dict) .name | default dict -}}
+{{- if not (hasKey $service "enabled") -}}
+{{- fail (printf "services.%s.enabled is not set: add services/%s.yaml to valueFiles (argocd/idem-dev.yaml, helm -f)" .name .name) -}}
+{{- end -}}
+{{- toYaml $service -}}
+{{- end }}

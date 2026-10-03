@@ -1,0 +1,1 @@
+{{ include "idem.ingress" (dict "name" "registrar" "root" $) }}

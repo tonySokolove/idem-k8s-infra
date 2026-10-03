@@ -1,0 +1,42 @@
+# Check-in Service: проверка билета на входе и выдача NFC-бейджа. К нему ходит Station Agent.
+# Шаблоны — templates/check-in/. Тег образа — в argocd/idem-dev.yaml (helm.parameters);
+# домен и переменные, зависящие от среды, — в envs/<env>.yaml (ingress.host, extraEnv).
+services:
+  check-in:
+    enabled: true
+    image:
+      repository: ghcr.io/tonysokolove/idem-check-in
+    port: 8080
+    servicePort: 80
+    healthPath: /health
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: "1"
+        memory: 768Mi
+    env:
+      - name: DB_URL
+        value: jdbc:postgresql://idem-postgresql:5432/idem?sslmode=disable
+      - name: DB_USERNAME
+        value: idem_checkin
+      - name: DB_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: idem-check-in
+            key: db-password
+      - name: STATION_AGENT_API_KEYS
+        valueFrom:
+          secretKeyRef:
+            name: idem-check-in
+            key: station-agent-api-keys
+      - name: REGISTRATION_URL
+        value: http://idem-registration
+      - name: REGISTRATION_API_TOKEN
+        valueFrom:
+          secretKeyRef:
+            name: idem-registration
+            key: checkin-token
+    ingress:
+      enabled: true
