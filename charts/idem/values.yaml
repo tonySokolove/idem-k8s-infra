@@ -15,12 +15,21 @@ global:
       cpu: 300m
       memory: 512Mi
 
+# Квота namespace. Считается как «все сервисы работают» + «все Deployment одновременно в rollout»
+# (maxSurge: 1 — на время обновления поднимается второй pod с теми же resources).
+# StatefulSet PostgreSQL второй pod не поднимает.
+# Сейчас (check-in, registration, registrar, PostgreSQL):
+#   limits.cpu      3.3 работают + 2.3 rollout = 5.6  → 6
+#   limits.memory   3Gi        + 2Gi         = 5Gi  → 6Gi
+#   requests.cpu    0.55       + 0.3         = 0.85 → 1.5
+#   requests.memory 1152Mi     + 640Mi       ≈ 1.8Gi → 3Gi
+# Новый сервис → пересчитать: его limits × 2.
 resourceQuota:
   enabled: true
   hard:
     requestsCpu: "1.5"
     requestsMemory: 3Gi
-    limitsCpu: "4"
+    limitsCpu: "6"
     limitsMemory: 6Gi
 
 limitRange:
