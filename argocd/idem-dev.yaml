@@ -26,13 +26,13 @@ spec:
       # следующий kubectl apply этого файла вернёт старую версию.
       parameters:
         - name: services.registrar.image.tag
-          value: "0.1.2"
+          value: "0.1.3"
           forceString: true
         - name: services.check-in.image.tag
-          value: "0.1.0"
+          value: "0.3.0"
           forceString: true
         - name: services.registration.image.tag
-          value: "0.1.0"
+          value: "0.2.0"
           forceString: true
 
   destination:
